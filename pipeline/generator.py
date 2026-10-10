@@ -20,10 +20,17 @@ def build(ep_id: str, only: set[str] | None = None) -> Path:
     ep_dir = ROOT / "episodes" / ep_id
     manifest = json.loads((ep_dir / "manifest.json").read_text(encoding="utf-8"))
     out_dir = ROOT / "build" / ep_id
+    built = out_dir / "manifest.json"
+    # Scenes skipped by --only keep the output from the previous build.
+    previous = {s["id"]: s.get("output") for s in json.loads(built.read_text(encoding="utf-8"))["scenes"]} if built.exists() else {}
     rendered = {}  # same source used by several scenes renders once
     for scene in manifest["scenes"]:
         src = scene.get("asset")
-        if not src or (only and scene["type"] not in only):
+        if not src:
+            continue
+        if only and scene["type"] not in only:
+            if previous.get(scene["id"]):
+                scene["output"] = previous[scene["id"]]
             continue
         if src not in rendered:
             print(f"[{scene['type']}] {src}", flush=True)

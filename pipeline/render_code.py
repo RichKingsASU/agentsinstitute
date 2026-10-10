@@ -7,7 +7,7 @@ from pygments import highlight
 from pygments.formatters import SvgFormatter
 from pygments.lexers import get_lexer_for_filename
 from pygments.style import Style
-from pygments.token import Comment, Keyword, Name, Number, Operator, String, Text
+from pygments.token import Comment, Keyword, Name, Number, Operator, String, Token
 
 ROOT = Path(__file__).resolve().parent.parent
 BRAND = json.loads((ROOT / "config" / "brand_tokens.json").read_text())
@@ -17,7 +17,7 @@ C = BRAND["colors"]
 class BrandStyle(Style):
     background_color = C["surface"]
     styles = {
-        Text: C["textPrimary"],
+        Token: C["textPrimary"],
         Comment: f"italic {C['textSecondary']}",
         Keyword: f"bold {C['secondary']}",
         Name.Function: C["primary"],

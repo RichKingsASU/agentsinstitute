@@ -8,10 +8,10 @@ export const TerminalPlayer: React.FC<{ src: string; title: string }> = ({ src, 
   const enter = spring({ frame, fps, config: { damping: 200 } });
 
   return (
-    <AbsoluteFill style={{ alignItems: "center", paddingTop: 140 }}>
+    <AbsoluteFill style={{ alignItems: "center", paddingTop: 100 }}>
       <div
         style={{
-          width: 3200,
+          width: 2800,
           borderRadius: 24,
           overflow: "hidden",
           background: C.background,

@@ -1,5 +1,5 @@
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
-import { C, MONO } from "../brand";
+import { C, MONO, SAFE_BOTTOM } from "../brand";
 
 // Narration typed out word-by-word across the first ~80% of the scene, with a block cursor.
 export const Captions: React.FC<{ text: string }> = ({ text }) => {
@@ -15,7 +15,7 @@ export const Captions: React.FC<{ text: string }> = ({ text }) => {
   const cursorOn = Math.floor(frame / (fps / 2)) % 2 === 0;
 
   return (
-    <AbsoluteFill style={{ justifyContent: "flex-end", alignItems: "center", paddingBottom: 120 }}>
+    <AbsoluteFill style={{ justifyContent: "flex-end", alignItems: "center", paddingBottom: SAFE_BOTTOM }}>
       <div
         style={{
           maxWidth: 3200,

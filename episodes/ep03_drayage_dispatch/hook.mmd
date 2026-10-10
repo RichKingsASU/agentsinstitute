@@ -1,0 +1,12 @@
+flowchart TB
+  subgraph IN["what the gate actually sends"]
+    direction LR
+    W1["AVAILABLE e1<br/>MSKU1234567"] ~~~ W2["AVAILABLE e1<br/>retry"] ~~~ W3["OUTGATE e4<br/>arrives first"] ~~~ W4["AVAILABLE e5<br/>arrives late"]
+  end
+  subgraph NAIVE["naive agent: every event becomes a tool call"]
+    direction LR
+    L["LLM<br/>reserve_chassis()"] --> F1["2 chassis<br/>for 1 box"] ~~~ F2["truck sent to<br/>a box that left"] ~~~ F3["demurrage<br/>never checked"]
+  end
+  IN -->|no dedupe · no ordering| NAIVE
+  classDef fail stroke:#7000FF,stroke-width:4px
+  class F1,F2,F3 fail

@@ -1,0 +1,42 @@
+{
+  "title": "Agent Loops: Token Cascades & Infinite Loop Guards",
+  "series": "Agents Institute",
+  "scenes": [
+    {
+      "id": "intro",
+      "type": "diagram",
+      "asset": "architecture.mmd",
+      "duration_s": 12,
+      "narration": "An agent loop resends the whole transcript on every step. Each tool result makes the next prompt bigger, so cost compounds. That is a token cascade."
+    },
+    {
+      "id": "agent-code",
+      "type": "code",
+      "asset": "counter_agent.py",
+      "duration_s": 14,
+      "narration": "This toy agent gets stuck calling the same search. Three guards sit between the model and the tool: a repeat limit, a token budget, and a hard step cap.",
+      "lines": [
+        6,
+        37
+      ],
+      "highlight_lines": [
+        29,
+        32
+      ]
+    },
+    {
+      "id": "demo",
+      "type": "terminal",
+      "asset": "demo.tape",
+      "duration_s": 16,
+      "narration": "Unguarded, twelve steps burn sixteen thousand tokens and nothing stops it. Guarded, the third identical call trips the repeat guard at thirty-five hundred."
+    },
+    {
+      "id": "outro",
+      "type": "diagram",
+      "asset": "architecture.mmd",
+      "duration_s": 8,
+      "narration": "Guard every loop. Cap steps, budget tokens, and detect repeats before the tool runs, not after the bill arrives."
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+flowchart LR
+  subgraph INGEST["1 · ingest"]
+    direction TB
+    G["gate webhook"] --> API["POST /gate-events<br/>202 Accepted"] --> Q["event queue"]
+  end
+  subgraph EVAL["2 · structured evaluation"]
+    direction TB
+    D(["dedupe<br/>event_id"]) -->|new| O(["order<br/>ts vs last"]) -->|current| T(["dwell<br/>>= 72h"])
+  end
+  subgraph ACT["3 · lock + dispatch"]
+    direction TB
+    K["Redis SET NX EX<br/>chassis:{id}"] -->|acquired| C["carrier<br/>dispatch API"]
+  end
+  INGEST --> EVAL
+  EVAL -->|DISPATCH| ACT
+  EVAL -.->|DUPLICATE<br/>STALE · HOLD| X["drop or<br/>re-check"]
+  classDef reject stroke:#7000FF,stroke-width:4px
+  class X reject

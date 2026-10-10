@@ -4,12 +4,13 @@
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File scripts/build.ps1 setup
   powershell -ExecutionPolicy Bypass -File scripts/build.ps1 render-video -Episode ep01_mcp_servers
+  powershell -ExecutionPolicy Bypass -File scripts/build.ps1 render-video   # newest episode
 #>
 param(
     [Parameter(Mandatory, Position = 0)]
     [ValidateSet('setup', 'test-pipeline', 'render-assets', 'render-video')]
     [string]$Task,
-    [string]$Episode = 'ep01_mcp_servers'
+    [string]$Episode  # default: episode folder with the most recently modified file
 )
 $ErrorActionPreference = 'Stop'
 $Root = Split-Path $PSScriptRoot -Parent
@@ -32,6 +33,19 @@ function Install-UserFonts([string]$Repo, [string]$Match) {
         New-ItemProperty 'HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts' -Name "$($_.BaseName) (TrueType)" `
             -Value (Join-Path $fontDir $_.Name) -PropertyType String -Force | Out-Null
     }
+}
+
+function Resolve-Episode {
+    if ($Episode) {
+        if (-not (Test-Path "episodes\$Episode\manifest.json")) { throw "episodes\$Episode\manifest.json not found" }
+        return $Episode
+    }
+    # Folder mtime only changes when entries are added/removed, so rank by newest file inside.
+    $latest = Get-ChildItem episodes -Directory | Sort-Object {
+        (Get-ChildItem $_.FullName -File -Recurse | Measure-Object LastWriteTime -Maximum).Maximum
+    } | Select-Object -Last 1
+    Write-Host "No -Episode given -> using most recently modified: $($latest.Name)" -ForegroundColor Yellow
+    return $latest.Name
 }
 
 function Test-Toolchain {
@@ -75,12 +89,15 @@ switch ($Task) {
     }
     'test-pipeline' {
         Test-Toolchain
-        Invoke-Native python pipeline/test_pipeline.py
+        # Explicit -Episode tests one; otherwise every episode.
+        if ($Episode) { Invoke-Native python pipeline/test_pipeline.py (Resolve-Episode) } else { Invoke-Native python pipeline/test_pipeline.py }
     }
     'render-assets' {
+        $Episode = Resolve-Episode
         Invoke-Native python pipeline/generator.py $Episode
     }
     'render-video' {
+        $Episode = Resolve-Episode
         $build = "build\$Episode"
         if (-not (Test-Path "$build\manifest.json")) { Invoke-Native python pipeline/generator.py $Episode }
         $public = "remotion\public\$Episode"

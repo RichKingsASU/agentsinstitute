@@ -7,7 +7,7 @@ import { TerminalPlayer } from "./components/TerminalPlayer";
 const Visual: React.FC<{ scene: Scene; epId: string }> = ({ scene, epId }) => {
   if (!scene.output) return null;
   const src = staticFile(`${epId}/${scene.output}`);
-  return scene.type === "terminal" ? <TerminalPlayer src={src} title={scene.asset ?? ""} /> : <DiagramView src={src} />;
+  return scene.type === "terminal" ? <TerminalPlayer src={src} title={scene.asset ?? ""} aspect={scene.aspect} /> : <DiagramView src={src} aspect={scene.aspect} camera={scene.camera} />;
 };
 
 export const Episode: React.FC<Manifest> = ({ epId, scenes }) => {

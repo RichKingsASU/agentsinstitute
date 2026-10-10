@@ -1,0 +1,51 @@
+{
+  "title": "Autonomous Drayage Dispatch: Guarding Agents Against Real-World Events",
+  "series": "Agents Institute",
+  "scenes": [
+    {
+      "id": "hook",
+      "type": "diagram",
+      "asset": "hook.mmd",
+      "duration_s": 15,
+      "narration": "Terminal gates retry webhooks and deliver them out of order. Turn every event into an LLM tool call and you double-book chassis, send trucks to boxes that already left, and miss demurrage."
+    },
+    {
+      "id": "architecture",
+      "type": "diagram",
+      "asset": "architecture.mmd",
+      "duration_s": 20,
+      "narration": "Make it a state machine instead. Ingest and acknowledge fast. Evaluate in fixed order: dedupe the event id, drop anything older than what you know, check dwell. Only then take a Redis SET NX lock on the chassis and call the carrier."
+    },
+    {
+      "id": "code",
+      "type": "code",
+      "asset": "dispatch_guard.py",
+      "duration_s": 20,
+      "narration": "The guard is plain typed Python. Events carry terminal time, not arrival time. Past seventy-two hours of dwell, with a twenty-four hour buffer before free time ends, the guard reserves the chassis exactly once.",
+      "lines": [
+        41,
+        62
+      ],
+      "highlight_lines": [
+        49,
+        52,
+        58,
+        60
+      ]
+    },
+    {
+      "id": "demo",
+      "type": "terminal",
+      "asset": "demo.tape",
+      "duration_s": 20,
+      "narration": "Seven events: a retry, a second feed for the same box, an outgate that beats its own availability. Two dispatches, zero double reservations, one stale event dropped, all asserted, plus a throughput benchmark held above fifty thousand events per second."
+    },
+    {
+      "id": "outro",
+      "type": "diagram",
+      "asset": "architecture.mmd",
+      "duration_s": 10,
+      "narration": "Let the model reason, but let code own the side effects. Full source is in the companion repo: github.com/RichKingsASU/agentsinstitute."
+    }
+  ]
+}

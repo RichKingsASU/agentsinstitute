@@ -1,38 +1,53 @@
-"""End-to-end check: every generator runs on ep01 and produces a sane file."""
+"""End-to-end check: render episodes and validate every output.
+
+Usage: python pipeline/test_pipeline.py [ep_id ...]   (default: all episodes)
+"""
 import json
 import shutil
-import struct
 import subprocess
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import generator
+from render_diagram import aspect_warning, png_size
+from render_terminal import visible_duration
 
-EP = "ep01_mcp_servers"
+ROOT = Path(__file__).resolve().parent.parent
 
 
-def main():
-    out_dir = generator.build(EP)
+def clip_seconds(path: Path) -> float:
+    return float(subprocess.run([shutil.which("ffprobe"), "-v", "error", "-show_entries", "format=duration",
+                                 "-of", "csv=p=0", str(path)], capture_output=True, text=True, check=True).stdout)
+
+
+def check(ep_id: str) -> None:
+    out_dir = generator.build(ep_id)
     manifest = json.loads((out_dir / "manifest.json").read_text(encoding="utf-8"))
-    seen = set()
     for scene in manifest["scenes"]:
         out = out_dir / scene["output"]
         assert out.stat().st_size > 0, f"empty output {out}"
-        seen.add(scene["type"])
         if out.suffix == ".png":
-            w, _ = struct.unpack(">II", out.read_bytes()[16:24])
-            assert w == 3840, f"{out.name}: expected 4K width, got {w}"
+            w, h = png_size(out)
+            assert w == 3840 or h == 3840, f"{out.name}: expected a 4K long edge, got {w}x{h}"
+            assert not (warn := aspect_warning(w, h)), f"{out.name}: {warn}"
         elif out.suffix == ".mp4":
-            dur = subprocess.run([shutil.which("ffprobe"), "-v", "error", "-show_entries", "format=duration",
-                                  "-of", "csv=p=0", str(out)], capture_output=True, text=True, check=True).stdout
-            assert float(dur) > 1, f"{out.name}: clip too short ({dur.strip()}s)"
+            dur = clip_seconds(out)
+            expected = visible_duration((ROOT / "episodes" / ep_id / scene["asset"]).read_text(encoding="utf-8"))
+            if expected:
+                assert abs(dur - expected) / expected < 0.10, f"{out.name}: {dur:.1f}s vs scripted {expected:.1f}s (playback rate off)"
+            assert dur >= scene["duration_s"] - 1, f"{out.name}: {dur:.1f}s clip is shorter than its {scene['duration_s']}s scene"
         elif out.suffix == ".svg":
             assert out.read_text(encoding="utf-8").rstrip().endswith("</svg>"), f"{out.name}: malformed svg"
-        print(f"ok  {scene['type']:<9} {out.name}")
-    assert seen == {"diagram", "terminal", "code"}, f"generators not all exercised: {seen}"
-    print("pipeline OK")
+        print(f"ok  {ep_id}  {scene['type']:<9} {out.name}")
+
+
+def main(ep_ids: list[str]) -> None:
+    ep_ids = ep_ids or sorted(p.parent.name for p in (ROOT / "episodes").glob("*/manifest.json"))
+    for ep_id in ep_ids:
+        check(ep_id)
+    print(f"pipeline OK ({len(ep_ids)} episodes)")
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])

@@ -1,0 +1,14 @@
+flowchart TB
+  subgraph LOOP["agent loop: every step resends the transcript"]
+    direction LR
+    CTX["Transcript<br/>+184 tokens / step"] -->|resend all| LLM["LLM"]
+    LLM -->|tool call| T["Tool"]
+    T -->|append result| CTX
+  end
+  subgraph GUARDS["guards: checked before the tool runs"]
+    direction LR
+    R["repeat<br/>same call > 2x"] ~~~ B["budget<br/>spent > 6000"] ~~~ S["step cap<br/>steps > 8"] -->|any trips| H["HALT<br/>+ PASS assert"]
+  end
+  LOOP -->|every tool call| GUARDS
+  classDef halt stroke:#7000FF,stroke-width:4px
+  class H halt

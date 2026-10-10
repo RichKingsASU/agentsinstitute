@@ -1,17 +1,23 @@
 import { AbsoluteFill, OffthreadVideo, spring, useCurrentFrame, useVideoConfig } from "remotion";
-import { C, MONO } from "../brand";
+import { C, CAPTION_BAND, MONO } from "../brand";
 
-// VHS clip framed as a terminal window.
-export const TerminalPlayer: React.FC<{ src: string; title: string }> = ({ src, title }) => {
+const TOP = 60;
+const BAR = 72; // title bar height
+const MAX_W = 3440;
+
+// VHS clip framed as a terminal window sized to the clip's own aspect ratio (no letterbox bars).
+export const TerminalPlayer: React.FC<{ src: string; title: string; aspect?: number }> = ({ src, title, aspect = 16 / 9 }) => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const { fps, height } = useVideoConfig();
   const enter = spring({ frame, fps, config: { damping: 200 } });
+  const videoW = Math.min(MAX_W, (height - TOP - CAPTION_BAND - BAR) * aspect);
+  const videoH = videoW / aspect;
 
   return (
-    <AbsoluteFill style={{ alignItems: "center", paddingTop: 100 }}>
+    <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", paddingTop: TOP, paddingBottom: CAPTION_BAND }}>
       <div
         style={{
-          width: 2800,
+          width: videoW,
           borderRadius: 24,
           overflow: "hidden",
           background: C.background,
@@ -23,7 +29,7 @@ export const TerminalPlayer: React.FC<{ src: string; title: string }> = ({ src, 
       >
         <div
           style={{
-            height: 72,
+            height: BAR,
             background: C.surface,
             display: "flex",
             alignItems: "center",
@@ -35,7 +41,7 @@ export const TerminalPlayer: React.FC<{ src: string; title: string }> = ({ src, 
         >
           <span style={{ color: C.primary }}>▍</span>&nbsp;{title}
         </div>
-        <OffthreadVideo src={src} muted style={{ width: "100%", display: "block" }} />
+        <OffthreadVideo src={src} muted style={{ width: videoW, height: videoH, display: "block" }} />
       </div>
     </AbsoluteFill>
   );

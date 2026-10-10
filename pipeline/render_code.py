@@ -51,16 +51,20 @@ def render(src: Path, out_dir: Path, highlight_lines: list[int] = (), lines: lis
     # Pygments emits a bare <svg>; give it a size and a rounded brand card behind the text.
     card = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">'
             f'<rect width="{w}" height="{h}" rx="24" fill="{C["surface"]}" stroke="{C["primary"]}" stroke-opacity="0.35" stroke-width="2"/>')
-    for n in highlight_lines:  # bar behind the line, plus an accent tick in the gutter
-        if first <= n <= last:
-            y = pad + (n - first) * step + int(font_size * 0.3)
-            card += (f'<rect x="{pad // 2}" y="{y}" width="{w - pad}" height="{step}" fill="{C["primary"]}" fill-opacity="0.12"/>'
-                     f'<rect x="{pad // 2}" y="{y}" width="6" height="{step}" fill="{C["primary"]}"/>')
+    active = {n for n in highlight_lines if first <= n <= last}
+    dim = lambda n: ' opacity="0.35"' if active and n not in active else ""
+    for run in _runs(sorted(active)):  # one cyan border around each block of consecutive active lines
+        y = pad + (run[0] - first) * step - int(font_size * 0.05)  # centered on the glyphs (baseline - 0.3em)
+        card += (f'<rect x="{pad // 2}" y="{y}" width="{w - pad}" height="{len(run) * step}" rx="8" fill="none" '
+                 f'stroke="{C["primary"]}" stroke-width="3"/>')
     for i, n in enumerate(range(first, last + 1)):  # line numbers, right-aligned in the gutter
         card += (f'<text x="{pad + gutter - char_w * 2:.0f}" y="{pad + font_size + i * step}" text-anchor="end" '
                  f'font-family="{BRAND["fonts"]["mono"]}, monospace" font-size="{font_size}px" fill="{C["textSecondary"]}" '
-                 f'fill-opacity="0.6">{n}</text>')
-    svg = svg[svg.index("<g"):].replace("</svg>", "") + "</svg>"
+                 f'fill-opacity="0.6"{dim(n)}>{n}</text>')
+    body = svg[svg.index("<g"):].replace("</svg>", "")
+    parts = body.split("<text ")  # Pygments emits one <text> per line, in order
+    body = parts[0] + "".join(f"<text{dim(first + i)} {p}" for i, p in enumerate(parts[1:]))
+    svg = body + "</svg>"
     suffix = (f".L{first}-{last}" if lines else "") + (".hl" + "-".join(map(str, highlight_lines)) if highlight_lines else "")
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / f"{src.name}{suffix}.svg"
@@ -68,5 +72,17 @@ def render(src: Path, out_dir: Path, highlight_lines: list[int] = (), lines: lis
     return out
 
 
+def _runs(nums: list[int]) -> list[list[int]]:
+    runs: list[list[int]] = []
+    for n in nums:
+        if runs and n == runs[-1][-1] + 1:
+            runs[-1].append(n)
+        else:
+            runs.append([n])
+    return runs
+
+
 if __name__ == "__main__":
-    print(render(Path(sys.argv[1]), Path(sys.argv[2] if len(sys.argv) > 2 else "build")))
+    assert _runs([27, 31, 32, 33]) == [[27], [31, 32, 33]] and _runs([]) == []
+    if len(sys.argv) > 1:
+        print(render(Path(sys.argv[1]), Path(sys.argv[2] if len(sys.argv) > 2 else "build")))

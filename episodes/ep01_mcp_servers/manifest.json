@@ -20,7 +20,7 @@
       "id": "demo",
       "type": "terminal",
       "asset": "demo.tape",
-      "duration_s": 14,
+      "duration_s": 15,
       "narration": "The client spawns the server, sends initialize, lists tools, and calls add. Three round trips, all over stdin and stdout."
     },
     {

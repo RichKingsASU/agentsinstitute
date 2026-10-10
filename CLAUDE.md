@@ -19,6 +19,11 @@ cd remotion; npx remotion studio; npx tsc --noEmit
 ## Layout
 
 - `episodes/<ep_id>/manifest.json`: scenes `{id, type: diagram|terminal|code, asset, duration_s, narration}`. `asset` is a path relative to the episode folder.
+  Optional per scene:
+  - `camera: {initial_zoom, pan_to}` (diagram scenes): `pan_to` names a subgraph/node id. `render_diagram.py` writes `<stem>.boxes.json` (pixel boxes in the final PNG); the generator fails if the id is missing, and Remotion springs the camera onto that box.
+  - `lines: [first, last]` (code scenes): excerpt with line numbers. Cards over 36 lines fail, because they're unreadable at 4K.
+  - `highlight_lines: [n, ...]` (code scenes, file line numbers): cyan border around those lines; all others dim to 35%.
+- `.mmd` files may use `{{token}}` (e.g. `stroke:{{danger}}`); it's replaced with `colors.<token>` from `brand_tokens.json` at render time.
 - `pipeline/generator.py`: renders each scene's asset into `build/<ep_id>/` and writes `build/<ep_id>/manifest.json`, which adds `output` and `epId`. That file becomes the Remotion `--props`.
 - `remotion/src/`: `Root.tsx` (composition `Episode`), `Episode.tsx` (scene `Series`), `components/` (TerminalPlayer, DiagramView, Captions). `render-video` copies `build/<ep>` to `remotion/public/<ep>`.
 - `config/brand_tokens.json`: the only source of colors and fonts. Python (`render_code.py`, `render_terminal.py`) and TS (`remotion/src/brand.ts`) both read it.

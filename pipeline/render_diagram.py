@@ -1,7 +1,10 @@
 """Compile a Mermaid .mmd file to a 4K transparent PNG via mmdc.
 
-Also writes <stem>.boxes.json: every subgraph and node's bounding box as percentages of the
-image, so the video camera can pan/zoom to a named element (manifest `camera.pan_to`).
+`{{token}}` in the .mmd (e.g. `stroke:{{danger}}`) is replaced with colors.<token> from
+config/brand_tokens.json, so diagrams stay on the token palette.
+
+Also writes <stem>.boxes.json: {"size": [w, h], "boxes": {id: [x, y, w, h]}} in pixels of the
+final PNG for every subgraph and node, so the camera can pan/zoom to one (`camera.pan_to`).
 """
 import json
 import re
@@ -14,6 +17,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG = ROOT / "config" / "mermaid_config.json"
+COLORS = json.loads((ROOT / "config" / "brand_tokens.json").read_text(encoding="utf-8"))["colors"]
 ASPECT_MIN, ASPECT_MAX = 1.2, 2.2  # w/h that sits on a 16:9 canvas without heavy letterboxing
 
 
@@ -30,6 +34,14 @@ def aspect_warning(w: int, h: int) -> str | None:
         return (f"{a:.2f}:1 is too tall (min {ASPECT_MIN}:1) - switch to `flowchart LR` or put "
                 f"sequential stages side by side in subgraphs")
     return None
+
+
+def apply_tokens(text: str) -> str:
+    def sub(m: re.Match) -> str:
+        if m.group(1) not in COLORS:
+            raise KeyError(f"unknown brand token {{{{{m.group(1)}}}}} (have: {', '.join(COLORS)})")
+        return COLORS[m.group(1)]
+    return re.sub(r"\{\{(\w+)\}\}", sub, text)
 
 
 def boxes(svg: str) -> dict[str, list[float]]:
@@ -56,17 +68,20 @@ def render(src: Path, out_dir: Path) -> Path:
         raise RuntimeError("mmdc not found: npm i -g @mermaid-js/mermaid-cli")
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / f"{src.stem}.png"
-    subprocess.run(
-        [mmdc, "-i", str(src), "-o", str(out), "-c", str(CONFIG),
-         "-b", "transparent", "--size", "3840", "-q"],
-        check=True,
-    )
-    if warning := aspect_warning(*png_size(out)):
-        print(f"  WARNING {src.name}: {warning}", flush=True)
     with tempfile.TemporaryDirectory() as tmp:
+        mmd = Path(tmp) / src.name
+        mmd.write_text(apply_tokens(src.read_text(encoding="utf-8")), encoding="utf-8")
+        compile_ = lambda dst, *extra: subprocess.run(
+            [mmdc, "-i", str(mmd), "-o", str(dst), "-c", str(CONFIG), "-b", "transparent", "-q", *extra], check=True)
+        compile_(out, "--size", "3840")
+        w, h = png_size(out)
+        if warning := aspect_warning(w, h):
+            print(f"  WARNING {src.name}: {warning}", flush=True)
         svg = Path(tmp) / "d.svg"
-        subprocess.run([mmdc, "-i", str(src), "-o", str(svg), "-c", str(CONFIG), "-b", "transparent", "-q"], check=True)
-        (out_dir / f"{src.stem}.boxes.json").write_text(json.dumps(boxes(svg.read_text(encoding="utf-8")), indent=1))
+        compile_(svg)
+        px = {k: [round(v[0] * w / 100), round(v[1] * h / 100), round(v[2] * w / 100), round(v[3] * h / 100)]
+              for k, v in boxes(svg.read_text(encoding="utf-8")).items()}
+        (out_dir / f"{src.stem}.boxes.json").write_text(json.dumps({"size": [w, h], "boxes": px}, indent=1))
     return out
 
 
@@ -77,5 +92,6 @@ if __name__ == "__main__":
     demo = ('<svg viewBox="0 0 200 100"><g class="cluster" id="my-svg-S"><rect x="20" y="10" width="100" height="50"/></g>'
             '<g class="node default" id="my-svg-flowchart-N-0" transform="translate(150, 50)"><rect x="-10" y="-5" width="20" height="10"/></g></svg>')
     assert boxes(demo) == {"S": [10.0, 10.0, 50.0, 50.0], "N": [70.0, 45.0, 10.0, 10.0]}, boxes(demo)
+    assert apply_tokens("stroke:{{danger}}") == f"stroke:{COLORS['danger']}"
     if len(sys.argv) > 1:
         print(render(Path(sys.argv[1]), Path(sys.argv[2] if len(sys.argv) > 2 else "build")))

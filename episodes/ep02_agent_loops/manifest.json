@@ -28,7 +28,7 @@
       "id": "demo",
       "type": "terminal",
       "asset": "demo.tape",
-      "duration_s": 16,
+      "duration_s": 17,
       "narration": "Unguarded, twelve steps burn sixteen thousand tokens and nothing stops it. Guarded, the third identical call trips the repeat guard at thirty-five hundred."
     },
     {

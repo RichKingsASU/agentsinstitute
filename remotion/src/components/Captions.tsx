@@ -24,7 +24,7 @@ export const Captions: React.FC<{ text: string }> = ({ text }) => {
           borderLeft: `8px solid ${C.primary}`,
           borderRadius: 12,
           fontFamily: MONO,
-          fontSize: 64,
+          fontSize: 56, // 3 lines + padding + SAFE_BOTTOM = 459px, inside CAPTION_BAND
           lineHeight: 1.35,
           color: C.textPrimary,
         }}

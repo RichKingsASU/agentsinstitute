@@ -34,14 +34,19 @@ def aspect(path: Path) -> float | None:
 
 
 def resolve_camera(scene: dict, out_dir: Path) -> None:
-    """camera.pan_to names a subgraph/node; swap in its box from <stem>.boxes.json."""
+    """camera.pan_to names a subgraph/node; resolve it to a % box via the <stem>.boxes.json pixel sidecar."""
     cam = scene.get("camera")
     if not cam or "pan_to" not in cam:
         return
-    boxes = json.loads((out_dir / f"{Path(scene['output']).stem}.boxes.json").read_text())
-    if cam["pan_to"] not in boxes:
-        raise KeyError(f"scene {scene['id']}: pan_to {cam['pan_to']!r} not in diagram (have: {', '.join(boxes)})")
-    cam["focus"] = boxes[cam["pan_to"]]
+    sidecar = out_dir / f"{Path(scene['output']).stem}.boxes.json"
+    if not sidecar.exists():
+        raise FileNotFoundError(f"scene {scene['id']}: camera.pan_to needs a diagram; no {sidecar.name}")
+    data = json.loads(sidecar.read_text())
+    if cam["pan_to"] not in data["boxes"]:
+        raise KeyError(f"scene {scene['id']}: camera.pan_to {cam['pan_to']!r} is not a subgraph/node in "
+                       f"{scene['asset']} (have: {', '.join(data['boxes'])})")
+    (w, h), (x, y, bw, bh) = data["size"], data["boxes"][cam["pan_to"]]
+    cam["focus"] = [round(x / w * 100, 2), round(y / h * 100, 2), round(bw / w * 100, 2), round(bh / h * 100, 2)]  # % for Remotion
 
 
 def build(ep_id: str, only: set[str] | None = None) -> Path:

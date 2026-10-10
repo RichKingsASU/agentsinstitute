@@ -7,7 +7,7 @@
 - `#7000FF` is for borders, glows and fills only. It is too dark for text on `#0B0F19`/`#151C2C`. Code keywords use `colors.syntaxPurple` (`#C084FC`), a permanent token that `render_code.py` maps to Pygments `Keyword`.
 - Type: `JetBrains Mono` for code, terminals, captions; `Inter` for titles.
 - `colors.danger` (`#EF4444`, stroke) and `colors.dangerText` (`#F87171`, text) mark failure or anti-pattern paths only, such as a naive approach next to the right one.
-- 16:9 safe zones: captions sit at least 160px above the bottom edge (`SAFE_BOTTOM`), and visuals stay above the 480px caption band (`CAPTION_BAND`), both in `remotion/src/brand.ts`. Nothing may sit under the captions.
+- 16:9 safe zones: captions (56px JetBrains Mono, at most 3 lines) sit at least 160px above the bottom edge (`SAFE_BOTTOM`), and visuals stay above the 480px caption band (`CAPTION_BAND`), both in `remotion/src/brand.ts`. Nothing may sit under the captions.
 - Zero cartoon styling: no mascots, emoji, clip-art, hand-drawn fonts, bouncy cutesy motion. Motion is spring-damped and purposeful.
 
 ## Content

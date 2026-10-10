@@ -18,7 +18,7 @@ export const DiagramView: React.FC<{ src: string; aspect?: number; camera?: Scen
   const boxW = Math.min(availW, availH * a);
   const boxH = boxW / a;
 
-  let scale = interpolate(enter, [0, 1], [0.85, 1]) * (1 + 0.08 * drift);
+  let scale = interpolate(enter, [0, 1], [0.85, 0.92]) * (1 + 0.08 * drift); // peaks at 0.99: edges stay inside the clip
   let fx = 50;
   let fy = 50;
   if (camera?.focus) {

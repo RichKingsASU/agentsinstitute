@@ -19,7 +19,7 @@ class BrandStyle(Style):
     styles = {
         Token: C["textPrimary"],
         Comment: f"italic {C['textSecondary']}",
-        Keyword: f"bold {C['secondary']}",
+        Keyword: f"bold {C['syntaxPurple']}",
         Name.Function: C["primary"],
         Name.Class: f"bold {C['primary']}",
         Name.Decorator: C["primary"],

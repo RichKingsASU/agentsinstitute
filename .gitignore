@@ -1,0 +1,7 @@
+.cache/
+node_modules/
+build/
+out/
+.env
+__pycache__/
+.*.render.tape

@@ -1,0 +1,34 @@
+{
+  "title": "MCP Servers: stdio vs SSE",
+  "series": "Agents Institute",
+  "scenes": [
+    {
+      "id": "intro",
+      "type": "diagram",
+      "asset": "architecture.mmd",
+      "duration_s": 12,
+      "narration": "An MCP server speaks JSON-RPC. The only question is the pipe: stdio for a local subprocess, or HTTP plus Server-Sent Events for a remote service."
+    },
+    {
+      "id": "server-code",
+      "type": "code",
+      "asset": "server.py",
+      "duration_s": 10,
+      "narration": "Here is a complete server. FastMCP turns a typed Python function into a tool, and mcp.run defaults to the stdio transport."
+    },
+    {
+      "id": "demo",
+      "type": "terminal",
+      "asset": "demo.tape",
+      "duration_s": 14,
+      "narration": "The client spawns the server, sends initialize, lists tools, and calls add. Three round trips, all over stdin and stdout."
+    },
+    {
+      "id": "outro",
+      "type": "diagram",
+      "asset": "architecture.mmd",
+      "duration_s": 8,
+      "narration": "Same protocol, different transport. Pick stdio for local tools, SSE when the server lives on the network."
+    }
+  ]
+}

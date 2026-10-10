@@ -1,0 +1,11 @@
+flowchart LR
+  subgraph STDIO["stdio · local subprocess"]
+    direction LR
+    C1["MCP Client<br/>IDE / agent"] -- "stdin<br/>JSON-RPC" --> S1["MCP Server<br/>python server.py"]
+    S1 -- "stdout<br/>JSON-RPC" --> C1
+  end
+  subgraph SSE["HTTP + SSE · remote service"]
+    direction LR
+    C2["MCP Client"] -- "POST /messages<br/>requests" --> S2["MCP Server<br/>uvicorn :8000"]
+    S2 -- "GET /sse<br/>event stream" --> C2
+  end

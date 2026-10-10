@@ -1,0 +1,17 @@
+{
+  "name": "Agents Institute",
+  "url": "https://agents-institute.com",
+  "colors": {
+    "background": "#0B0F19",
+    "surface": "#151C2C",
+    "primary": "#00F0FF",
+    "secondary": "#7000FF",
+    "textPrimary": "#F1F5F9",
+    "textSecondary": "#94A3B8"
+  },
+  "fonts": {
+    "mono": "JetBrains Mono",
+    "sans": "Inter"
+  },
+  "video": { "width": 3840, "height": 2160, "fps": 60 }
+}
